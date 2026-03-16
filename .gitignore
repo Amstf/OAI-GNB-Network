@@ -1,0 +1,61 @@
+# ── OAI RAN build artifacts ──────────────────────────────────────────────────
+oai_ran/cmake_targets/ran_build/
+oai_ran/cmake_targets/log/
+oai_ran/cmake_targets/tmp/
+oai_ran/cmake_targets/autotests/
+oai_ran/build/
+oai_ran/**/*.o
+oai_ran/**/*.a
+oai_ran/**/*.so
+oai_ran/**/*.d
+oai_ran/oai-gnb.conf.bak
+oai_ran/mylogs/
+
+# ── E2 simulator build artifacts ─────────────────────────────────────────────
+o-ran-e2sim/build/
+o-ran-e2sim/e2sm_examples/kpm_e2sm/build/
+o-ran-e2sim/e2sm_examples/kpm_e2sm/nlohmann_json_release/build/
+o-ran-e2sim/**/*.o
+o-ran-e2sim/**/*.a
+o-ran-e2sim/**/*.so
+o-ran-e2sim/**/*.d
+o-ran-e2sim/*.deb
+
+# ── General build / compiler output ──────────────────────────────────────────
+*.o
+*.a
+*.so
+*.so.*
+*.d
+*.out
+*.elf
+*.bin
+
+# ── CMake ─────────────────────────────────────────────────────────────────────
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+CPackConfig.cmake
+CPackSourceConfig.cmake
+_CPack_Packages/
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+
+# ── Logs and temp files ───────────────────────────────────────────────────────
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+
+# ── OS metadata ───────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db

@@ -1,0 +1,9 @@
+N2-handover/cmake_targets/ran_build/build/
+N2-handover/logs/
+*.a
+build.ninja
+nr-softmodem
+*.o
+*.so
+*.bin
+*.log
