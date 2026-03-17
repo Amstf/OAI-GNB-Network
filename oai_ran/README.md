@@ -80,26 +80,7 @@ Single configuration file read by `nr-softmodem`. Key sections:
 
 > `start_gnb.sh` updates all fields above at launch time based on the interface IP. Manual editing of these fields is not required under normal deployment.
 
-**PLMN and Slices**
 
-Two S-NSSAIs are configured by default:
-
-| SST | SD | Purpose |
-|-----|----|---------|
-| 1 | `0xFFFFFF` | Default slice |
-| 1 | `0x000002` | Secondary slice |
-
-**RF / PHY Parameters**
-
-| Parameter | Value | Description |
-|-----------|-------|-------------|
-| `dl_frequencyBand` | 78 | NR Band 78 (3.5 GHz) |
-| `dl_subcarrierSpacing` | 1 (30 kHz) | SCS |
-| `dl_carrierBandwidth` | 106 PRBs | ~40 MHz |
-| `absoluteFrequencySSB` | 641280 | SSB center frequency (ARFCN) |
-| `dl_absoluteFrequencyPointA` | 640008 | Point A (ARFCN) |
-| `TDD pattern` | 7 DL / 2 UL slots | 5 ms periodicity |
-| `ssPBCH_BlockPower` | -25 dBm | SSB transmit power |
 
 **AMF / Core Network**
 
@@ -109,25 +90,9 @@ GNB_INTERFACE_NAME_FOR_NG_AMF = "col0"    # or "eth0" in rfsim mode
 GNB_IPV4_ADDRESS_FOR_NG_AMF   = "<auto-set by start_gnb.sh>"
 ```
 
-**Slicing Policy**
 
-```
-SliceConf = "/root/OAI-HANDOVER/oai_ran/rrmPolicy.json";
-```
 
-**RF Simulator Block** (rfsim mode only)
 
-```
-rfsimulator = {
-  serveraddr = "server";
-  serverport = "4043";
-  modelname  = "AWGN";
-};
-```
-
-`@include "CONF/neighbour_gnb_223_21.conf"` — the neighbour list is loaded at the top of the file (see §2.4).
-
----
 
 ### 2.2 `rrmPolicy.json` — Slice PRB Ratios
 
@@ -151,7 +116,7 @@ Read by the MAC scheduler at runtime. Can also be updated dynamically via the E2
 
 ---
 
-### 2.3 `nrUE_slice1.conf` / `nrUE_slice2.conf` / `nrUE1_slice1.conf` — UE Configurations
+### 2.3 `nrUE_slice1.conf` / `nrUE_slice2.conf` / — UE Configurations
 
 Each file defines the IMSI, authentication keys, DNN, and S-NSSAI for a UE. Example:
 
