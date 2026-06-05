@@ -59,7 +59,7 @@ fi
 echo "▶️  [5/5] Building OAI RAN..."
 
 echo "📥 Cloning OAI-RAN-Network..."
-lxc exec "$CONTAINER" -- git clone git@github.com:Amstf/OAI-RAN-Network.git
+lxc exec "$CONTAINER" -- git clone git@github.com:Amstf/OAI-GNB-Network.git
 
 echo "🔧 Installing dependencies..."
 lxc exec "$CONTAINER" -- apt-get update
