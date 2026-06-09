@@ -134,7 +134,8 @@ fi
 echo "🔧 Installing dependencies..."
 lxc exec "$CONTAINER" -- apt-get update
 lxc exec "$CONTAINER" -- apt-get install -y autoconf automake libtool curl make g++ pkg-config \
-  libprotobuf-dev protobuf-compiler libprotoc-dev protobuf-compiler net-tools iputils-ping
+  libprotobuf-dev protobuf-compiler libprotoc-dev net-tools iputils-ping \
+  libjson-c-dev
 
 echo "📦 Cloning and building protobuf-c..."
 lxc exec "$CONTAINER" -- bash -c "cd $DEST_PATH && git clone https://github.com/protobuf-c/protobuf-c"
