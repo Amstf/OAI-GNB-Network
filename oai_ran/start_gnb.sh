@@ -1,5 +1,5 @@
 #!/bin/bash
-CONF_FILE=~/OAI-HANDOVER/oai_ran/oai-gnb.conf
+CONF_FILE=~/OAI-GNB-Network/oai_ran/oai-gnb.conf
 CN_IP=192.168.70.129
 
 usage() {
