@@ -2,8 +2,13 @@
 
 # setup_ran_container.sh — Setup and build OAI RAN inside a container
 # Usage:
-#   ./setup_ran_container.sh <image-name.tar.gz> <build-type: rfsim|usrp> [alias] [container-name] [remote-user] [ssh-key-path] [local-repo-path]
-#   ./setup_ran_container.sh <image-name.tar.gz> <build-type: rfsim|usrp> [alias] [container-name] [remote-user] [ssh-key-path] --clone
+#   ./setup_ran_container.sh <image-name.tar.gz> <build-type: rfsim|usrp> [alias] [container-name] [remote-user] [ssh-key-path] [local-repo-path] [--gnb] [--ue]
+#   ./setup_ran_container.sh <image-name.tar.gz> <build-type: rfsim|usrp> [alias] [container-name] [remote-user] [ssh-key-path] --clone [--gnb] [--ue]
+#
+# Build target flags (can be combined):
+#   --gnb   Build only the gNB
+#   --ue    Build only the nrUE
+#   --gnb --ue  Build both (same as default if neither is specified)
 
 # ─── Parse arguments ────────────────────────────────────────────────────────
 
@@ -13,17 +18,30 @@ ALIAS="${3:-${IMAGE_NAME%.tar.gz}}"
 CONTAINER="${4:-${ALIAS}-cont}"
 REMOTE_USER="${5:-alimustapha}"
 SSH_KEY_PATH="$6"
-REPO_OR_FLAG="$7"
 
+# Scan remaining args ($7+) for flags and repo path
 USE_CLONE=false
 LOCAL_REPO_PATH=""
+BUILD_GNB=false
+BUILD_UE=false
 
-if [ "$REPO_OR_FLAG" = "--clone" ]; then
-  USE_CLONE=true
-elif [ -n "$REPO_OR_FLAG" ]; then
-  LOCAL_REPO_PATH="$REPO_OR_FLAG"
-else
-  # Default: use local repo relative to this script
+for arg in "${@:7}"; do
+  case "$arg" in
+    --clone) USE_CLONE=true ;;
+    --gnb)   BUILD_GNB=true ;;
+    --ue)    BUILD_UE=true ;;
+    *)       LOCAL_REPO_PATH="$arg" ;;
+  esac
+done
+
+# Default: build both if neither flag was given
+if [ "$BUILD_GNB" = false ] && [ "$BUILD_UE" = false ]; then
+  BUILD_GNB=true
+  BUILD_UE=true
+fi
+
+# Default local repo path if not set and not cloning
+if [ "$USE_CLONE" = false ] && [ -z "$LOCAL_REPO_PATH" ]; then
   LOCAL_REPO_PATH="$(cd "$(dirname "$0")/../.." && pwd)"
 fi
 
@@ -33,7 +51,7 @@ DEST_PATH="/root/OAI-GNB-Network"
 # ─── Validate input ──────────────────────────────────────────────────────────
 
 if [ -z "$IMAGE_NAME" ] || [ -z "$BUILD_TYPE" ]; then
-  echo "Usage: $0 <image-name.tar.gz> <build-type: rfsim|usrp> [alias] [container-name] [remote-user] [ssh-key-path] [local-repo-path|--clone]"
+  echo "Usage: $0 <image-name.tar.gz> <build-type: rfsim|usrp> [alias] [container-name] [remote-user] [ssh-key-path] [local-repo-path|--clone] [--gnb] [--ue]"
   exit 1
 fi
 
@@ -50,17 +68,22 @@ fi
 
 # ─── Display setup summary ───────────────────────────────────────────────────
 
+BUILD_TARGETS=""
+[ "$BUILD_GNB" = true ] && BUILD_TARGETS+="gNB "
+[ "$BUILD_UE"  = true ] && BUILD_TARGETS+="nrUE"
+
 echo "🤩 Starting setup for:"
-echo "  📦 Image:       $IMAGE_NAME"
-echo "  ⚙️  Build type:  $BUILD_TYPE"
-echo "  🏷️  Alias:       $ALIAS"
-echo "  🐧 Container:   $CONTAINER"
-echo "  🌐 Remote User: $REMOTE_USER"
-echo "  🔐 SSH Key:     ${SSH_KEY_PATH:-None provided}"
+echo "  📦 Image:        $IMAGE_NAME"
+echo "  ⚙️  Build type:   $BUILD_TYPE"
+echo "  🏷️  Alias:        $ALIAS"
+echo "  🐧 Container:    $CONTAINER"
+echo "  🌐 Remote User:  $REMOTE_USER"
+echo "  🔐 SSH Key:      ${SSH_KEY_PATH:-None provided}"
+echo "  🔨 Build targets: $BUILD_TARGETS"
 if [ "$USE_CLONE" = true ]; then
-  echo "  📥 Repo mode:   Clone from GitHub ($REPO_URL)"
+  echo "  📥 Repo mode:    Clone from GitHub ($REPO_URL)"
 else
-  echo "  📁 Repo mode:   Copy from local ($LOCAL_REPO_PATH)"
+  echo "  📁 Repo mode:    Copy from local ($LOCAL_REPO_PATH)"
 fi
 echo ""
 
@@ -149,22 +172,32 @@ echo "    lxc exec $CONTAINER -- tail -f $DEST_PATH/oai_ran/cmake_targets/log/as
 
 # ─── Step 5c: Build OAI RAN ──────────────────────────────────────────────────
 
-if [ "$BUILD_TYPE" = "rfsim" ]; then
-  echo "📡 Building gNB and nrUE with SIMU..."
-  lxc exec "$CONTAINER" -- bash -c "cd $DEST_PATH/oai_ran/cmake_targets && ./build_oai -w SIMU --ninja --gNB"
-  lxc exec "$CONTAINER" -- bash -c "cd $DEST_PATH/oai_ran/cmake_targets && ./build_oai -w SIMU --ninja --nrUE"
+W_FLAG=""
+[ "$BUILD_TYPE" = "rfsim" ] && W_FLAG="-w SIMU" || W_FLAG="-w USRP"
 
+if [ "$BUILD_GNB" = true ]; then
+  echo "📡 Building gNB ($BUILD_TYPE)..."
+  lxc exec "$CONTAINER" -- bash -c "cd $DEST_PATH/oai_ran/cmake_targets && ./build_oai $W_FLAG --ninja --gNB" || {
+    echo "❌ gNB build failed."; exit 1;
+  }
+fi
+
+if [ "$BUILD_UE" = true ]; then
+  echo "📡 Building nrUE ($BUILD_TYPE)..."
+  lxc exec "$CONTAINER" -- bash -c "cd $DEST_PATH/oai_ran/cmake_targets && ./build_oai $W_FLAG --ninja --nrUE" || {
+    echo "❌ nrUE build failed."; exit 1;
+  }
+fi
+
+if [ "$BUILD_TYPE" = "rfsim" ] && [ "$BUILD_GNB" = true ]; then
   echo "📄 Copying RFSIM config files into build directory..."
   lxc exec "$CONTAINER" -- bash -c "cp $DEST_PATH/oai_ran/nrUE_slice1.conf $DEST_PATH/oai_ran/cmake_targets/ran_build/build/"
   lxc exec "$CONTAINER" -- bash -c "cp $DEST_PATH/oai_ran/oai-gnb.conf $DEST_PATH/oai_ran/cmake_targets/ran_build/build/"
-else
-  echo "📡 Building gNB and nrUE with USRP..."
-  lxc exec "$CONTAINER" -- bash -c "cd $DEST_PATH/oai_ran/cmake_targets && ./build_oai -w USRP --ninja --gNB"
-  lxc exec "$CONTAINER" -- bash -c "cd $DEST_PATH/oai_ran/cmake_targets && ./build_oai -w USRP --ninja --nrUE"
 fi
 
 # ─── Done ────────────────────────────────────────────────────────────────────
 
 echo ""
 echo "✅ All steps completed successfully for container '$CONTAINER'"
-echo "   Repo location: $DEST_PATH"
+echo "   Repo location:  $DEST_PATH"
+echo "   Built targets:  $BUILD_TARGETS"
